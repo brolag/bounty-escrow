@@ -1,8 +1,11 @@
 {
-  "solidity.compileUsingRemoteVersion": "v0.8.26+commit.8a97fa7a",
+  "solidity.compileUsingRemoteVersion": "v0.8.26",
   "editor.formatOnSave": true,
   "[solidity]": {
     "editor.defaultFormatter": "JuanBlanco.solidity"
   },
-  "solidity.formatter": "forge"
+  "solidity.formatter": "forge",
+  "solidity.compilerOptimization": 200,
+  "solidity.packageDefaultDependenciesContractsDirectory": "src",
+  "solidity.packageDefaultDependenciesDirectory": "node_modules"
 }

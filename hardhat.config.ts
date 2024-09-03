@@ -1,5 +1,5 @@
-import {HardhatUserConfig} from 'hardhat/config'
-import {config as configENV} from 'dotenv'
+import type { HardhatUserConfig } from 'hardhat/config'
+import { config as configENV } from 'dotenv'
 import '@nomicfoundation/hardhat-foundry'
 import '@nomicfoundation/hardhat-toolbox'
 import '@openzeppelin/hardhat-upgrades'

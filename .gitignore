@@ -136,3 +136,6 @@ cache_hardhat
 typechain-types
 
 pnpm-lock.yaml
+
+# MAC
+.DS_Store
