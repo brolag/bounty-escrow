@@ -6,6 +6,7 @@ import { ISPHook } from "@ethsign/sign-protocol-evm/src/interfaces/ISPHook.sol";
 
 // Interface for our BountyEscrow contract
 interface IBountyEscrow {
+    function createBounty() external payable returns (uint256);
     function commitToBounty(
         uint256 _bountyId,
         bytes memory _projectOwnerSignature,
@@ -13,6 +14,16 @@ interface IBountyEscrow {
     )
         external;
     function completeBounty(uint256 _bountyId, bytes memory _projectOwnerSignature) external;
+    function getBounty(uint256 _bountyId) external view returns (Bounty memory);
+}
+
+struct Bounty {
+    address funder;
+    address beneficiary;
+    uint256 amount;
+    bool isFunded;
+    bool isReleased;
+    bool isCommitted;
 }
 
 // Hook for commitment attestation

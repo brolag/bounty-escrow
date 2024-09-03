@@ -12,83 +12,75 @@ contract EscrowTest is Test {
     function setUp() public {
         funder = address(1);
         beneficiary = address(2);
-        vm.prank(funder);
         escrow = new Escrow();
     }
 
-    function testFund() public {
+    function testCreateBounty() public {
         vm.prank(funder);
         vm.deal(funder, 1 ether);
-        escrow.fund{ value: 1 ether }(beneficiary);
+        uint256 bountyId = escrow.createBounty{ value: 1 ether }();
 
-        assertEq(escrow.funder(), funder);
-        assertEq(escrow.beneficiary(), beneficiary);
-        assertEq(escrow.amount(), 1 ether);
-        assertTrue(escrow.isFunded());
-        assertFalse(escrow.isReleased());
+        Escrow.Bounty memory bounty = escrow.getBounty(bountyId);
+        assertEq(bounty.funder, funder);
+        assertEq(bounty.amount, 1 ether);
+        assertTrue(bounty.isFunded);
+        assertFalse(bounty.isReleased);
+        assertFalse(bounty.isCommitted);
         assertEq(address(escrow).balance, 1 ether);
     }
 
-    function testRelease() public {
+    function testCommitToBounty() public {
         vm.prank(funder);
         vm.deal(funder, 1 ether);
-        escrow.fund{ value: 1 ether }(beneficiary);
+        uint256 bountyId = escrow.createBounty{ value: 1 ether }();
 
+        bytes memory projectOwnerSignature = abi.encodePacked("projectOwnerSignature");
+        bytes memory freelancerSignature = abi.encodePacked("freelancerSignature");
+
+        vm.prank(address(0)); // Simulating the hook contract calling this function
+        escrow.commitToBounty(bountyId, beneficiary, projectOwnerSignature, freelancerSignature);
+
+        Escrow.Bounty memory bounty = escrow.getBounty(bountyId);
+        assertEq(bounty.beneficiary, beneficiary);
+        assertTrue(bounty.isCommitted);
+    }
+
+    function testCompleteBounty() public {
         vm.prank(funder);
-        escrow.release();
+        vm.deal(funder, 1 ether);
+        uint256 bountyId = escrow.createBounty{ value: 1 ether }();
 
-        assertTrue(escrow.isReleased());
+        bytes memory projectOwnerSignature = abi.encodePacked("projectOwnerSignature");
+        bytes memory freelancerSignature = abi.encodePacked("freelancerSignature");
+
+        vm.prank(address(0));
+        escrow.commitToBounty(bountyId, beneficiary, projectOwnerSignature, freelancerSignature);
+
+        bytes memory completionSignature = abi.encodePacked("completionSignature");
+
+        vm.prank(address(0));
+        escrow.completeBounty(bountyId, completionSignature);
+
+        Escrow.Bounty memory bounty = escrow.getBounty(bountyId);
+        assertTrue(bounty.isReleased);
         assertEq(beneficiary.balance, 1 ether);
-        assertEq(address(escrow).balance, 0);
-    }
-
-    function testCannotFundTwice() public {
-        vm.prank(funder);
-        vm.deal(funder, 2 ether);
-        escrow.fund{ value: 1 ether }(beneficiary);
-
-        vm.expectRevert("Contract is already funded");
-        escrow.fund{ value: 1 ether }(beneficiary);
-    }
-
-    function testCannotReleaseWithoutFunding() public {
-        vm.prank(funder);
-        vm.expectRevert("Contract is not funded");
-        escrow.release();
-    }
-
-    function testCannotReleaseIfNotFunder() public {
-        vm.prank(funder);
-        vm.deal(funder, 1 ether);
-        escrow.fund{ value: 1 ether }(beneficiary);
-
-        vm.prank(beneficiary);
-        vm.expectRevert("Only the funder can release funds");
-        escrow.release();
-    }
-
-    function testCannotReleaseTwice() public {
-        vm.prank(funder);
-        vm.deal(funder, 1 ether);
-        escrow.fund{ value: 1 ether }(beneficiary);
-
-        vm.prank(funder);
-        escrow.release();
-
-        vm.prank(funder);
-        vm.expectRevert("Funds have already been released");
-        escrow.release();
     }
 
     function testGetBalance() public {
         vm.prank(funder);
         vm.deal(funder, 1 ether);
-        escrow.fund{ value: 1 ether }(beneficiary);
+        uint256 bountyId = escrow.createBounty{ value: 1 ether }();
 
         assertEq(escrow.getBalance(), 1 ether);
 
-        vm.prank(funder);
-        escrow.release();
+        bytes memory projectOwnerSignature = abi.encodePacked("projectOwnerSignature");
+        bytes memory freelancerSignature = abi.encodePacked("freelancerSignature");
+        vm.prank(address(0));
+        escrow.commitToBounty(bountyId, beneficiary, projectOwnerSignature, freelancerSignature);
+
+        bytes memory completionSignature = abi.encodePacked("completionSignature");
+        vm.prank(address(0));
+        escrow.completeBounty(bountyId, completionSignature);
 
         assertEq(escrow.getBalance(), 0);
     }
